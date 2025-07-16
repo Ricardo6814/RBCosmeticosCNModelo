@@ -27,11 +27,13 @@ class Program
     static List<Produto> estoque = new List<Produto>();
     static List<Venda> vendas = new List<Venda>();
 
-    static string caminhoEstoque = "estoque.txt";
-    static string caminhoVendas = "vendas.txt";
+    static string pasta = "dados";
+    static string caminhoEstoque = Path.Combine(pasta, "estoque.txt");
+    static string caminhoVendas = Path.Combine(pasta, "vendas.txt");
 
     static void Main()
     {
+        Directory.CreateDirectory(pasta);
         CarregarEstoque();
         CarregarVendas();
 
@@ -42,12 +44,11 @@ class Program
             Console.WriteLine("================================");
             Console.WriteLine("1 - Adicionar Produto");
             Console.WriteLine("2 - Entrada de Estoque");
-            Console.WriteLine("3 - Saída (Venda)");
+            Console.WriteLine("3 - Registrar Venda");
             Console.WriteLine("4 - Visualizar Estoque");
             Console.WriteLine("5 - Gerar Relatório de Vendas (TXT)");
-            Console.WriteLine("6 - Salvar e Sair");
-            Console.WriteLine("7 - Gerar Relatório de Estoque (TXT)");
-            Console.WriteLine("8 - Gerar Relatório de Vendas (TXT)");
+            Console.WriteLine("6 - Gerar Relatório de Estoque (TXT)");
+            Console.WriteLine("7 - Salvar e Sair");
             Console.WriteLine("================================");
             Console.Write("Escolha uma opção: ");
             string opcao = Console.ReadLine();
@@ -56,16 +57,15 @@ class Program
             {
                 case "1": AdicionarProduto(); break;
                 case "2": EntradaEstoque(); break;
-                case "3": SaidaEstoque(); break;
+                case "3": RegistrarVenda(); break;
                 case "4": ListarEstoque(); break;
                 case "5": GerarRelatorioVendas(); break;
-                case "6":
+                case "6": GerarRelatorioEstoque(); break;
+                case "7":
                     SalvarEstoque();
                     SalvarVendas();
                     Console.WriteLine("Tudo salvo. Até logo!");
                     return;
-                case "7": GerarRelatorioEstoque(); break;
-                case "8": GerarRelatorioVendas(); break;
                 default: Console.WriteLine("Opção inválida."); break;
             }
 
@@ -79,9 +79,15 @@ class Program
         Console.Write("Nome do produto: ");
         string nome = Console.ReadLine();
 
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            Console.WriteLine("Nome do produto não pode estar vazio!");
+            return;
+        }
+
         if (BuscarProduto(nome) != null)
         {
-            Console.WriteLine("Produto já existe! Use 'Entrada' para adicionar mais.");
+            Console.WriteLine("Produto já existe! Use 'Entrada de Estoque' para adicionar mais.");
             return;
         }
 
@@ -93,9 +99,9 @@ class Program
         }
 
         Console.Write("Valor unitário: ");
-        if (!double.TryParse(Console.ReadLine(), NumberStyles.Any, CultureInfo.InvariantCulture, out double valorUnitario))
+        if (!double.TryParse(Console.ReadLine(), NumberStyles.Any, CultureInfo.InvariantCulture, out double valorUnitario) || valorUnitario <= 0)
         {
-            Console.WriteLine("Valor inválido!");
+            Console.WriteLine("Valor inválido! Deve ser maior que zero.");
             return;
         }
 
@@ -126,7 +132,7 @@ class Program
         Console.WriteLine("Entrada registrada!");
     }
 
-    static void SaidaEstoque()
+    static void RegistrarVenda()
     {
         Console.Write("Nome do produto: ");
         string nome = Console.ReadLine();
@@ -175,6 +181,8 @@ class Program
             return;
         }
 
+        double totalEstoque = 0;
+
         foreach (var produto in estoque)
         {
             Console.WriteLine("================================");
@@ -182,14 +190,16 @@ class Program
             Console.WriteLine($"Quantidade: {produto.Quantidade}");
             Console.WriteLine($"Valor Unitário: R$ {produto.ValorUnitario.ToString("F2", CultureInfo.InvariantCulture)}");
             Console.WriteLine($"Valor Total: R$ {produto.ValorTotal.ToString("F2", CultureInfo.InvariantCulture)}");
+            totalEstoque += produto.ValorTotal;
         }
 
-        Console.WriteLine("================================\n");
+        Console.WriteLine("================================");
+        Console.WriteLine($"TOTAL EM ESTOQUE: R$ {totalEstoque.ToString("F2", CultureInfo.InvariantCulture)}");
     }
 
     static void GerarRelatorioEstoque()
     {
-        string caminho = "relatorio_estoque.txt";
+        string caminho = Path.Combine(pasta, "relatorio_estoque.txt");
 
         using (StreamWriter writer = new StreamWriter(caminho))
         {
@@ -203,6 +213,8 @@ class Program
             }
             else
             {
+                double total = 0;
+
                 foreach (var p in estoque)
                 {
                     writer.WriteLine($"Produto: {p.Nome}");
@@ -210,7 +222,10 @@ class Program
                     writer.WriteLine($"Valor Unitário: R$ {p.ValorUnitario.ToString("F2", CultureInfo.InvariantCulture)}");
                     writer.WriteLine($"Valor Total: R$ {p.ValorTotal.ToString("F2", CultureInfo.InvariantCulture)}");
                     writer.WriteLine("----------------------------------------");
+                    total += p.ValorTotal;
                 }
+
+                writer.WriteLine($"TOTAL EM ESTOQUE: R$ {total.ToString("F2", CultureInfo.InvariantCulture)}");
             }
         }
 
@@ -219,7 +234,7 @@ class Program
 
     static void GerarRelatorioVendas()
     {
-        string caminho = "relatorio_vendas.txt";
+        string caminho = Path.Combine(pasta, "relatorio_vendas.txt");
 
         using (StreamWriter writer = new StreamWriter(caminho))
         {
@@ -278,9 +293,9 @@ class Program
                     };
                     estoque.Add(produto);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Erro ao carregar um produto do estoque.");
+                    Console.WriteLine($"Erro ao carregar produto: {ex.Message}");
                 }
             }
         }
@@ -317,9 +332,9 @@ class Program
                         Data = DateTime.ParseExact(partes[3], "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Erro ao carregar uma venda.");
+                    Console.WriteLine($"Erro ao carregar venda: {ex.Message}");
                 }
             }
         }
@@ -336,3 +351,4 @@ class Program
         }
     }
 }
+
