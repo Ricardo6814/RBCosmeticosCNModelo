@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RB Cosméticos - Sistema de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6a1b9a;
+            --secondary-color: #9c4dcc;
+            --accent-color: #e91e63;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .sidebar {
+            background-color: var(--primary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card.blue {
+            background-color: var(--secondary-color);
+        }
+        
+        .stat-card.green {
+            background-color: #27ae60;
+        }
+        
+        .stat-card.red {
+            background-color: var(--accent-color);
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: #27ae60;
+        }
+        
+        .badge-warning {
+            background-color: #f39c12;
+        }
+        
+        .badge-danger {
+            background-color: var(--accent-color);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 15px;
+        }
+        
+        .logo h4 {
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Toast styles */
+        .toast {
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast:not(.show) {
+            opacity: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="logo">
+                    <h4><i class="bi bi-droplet"></i> RB Cosméticos</h4>
+                    <p class="text-muted">Sistema de Estoque</p>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" id="dashboard-link">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="products-link">
+                            <i class="bi bi-box-seam"></i> Produtos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="sales-link">
+                            <i class="bi bi-cart-check"></i> Vendas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="reports-link">
+                            <i class="bi bi-graph-up"></i> Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Dashboard Section -->
+                <div id="dashboard-section">
+                    <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stat-card blue">
+                                <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                                <h4>Produtos Cadastrados</h4>
+                                <div class="stat-value" id="total-products">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card green">
+                                <i class="bi bi-cash-coin" style="font-size: 2rem;"></i>
+                                <h4>Valor Total em Estoque</h4>
+                                <div class="stat-value" id="total-stock-value">R$ 0,00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card red">
+                                <i class="bi bi-cart-check" style="font-size: 2rem;"></i>
+                                <h4>Vendas Hoje</h4>
+                                <div class="stat-value" id="today-sales">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="bi bi-box-seam"></i> Produtos com Baixo Estoque</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="low-stock-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Produto</th>
+                                                    <th>Quantidade</th>
+                                                    <th>Valor Unitário</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dinamic content -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="bi bi-cart-check"></i> Últimas Vendas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="recent-sales">
+                                            <thead>
+                                                <tr>
+                                                    <th>Produto</th>
+                                                    <th>Quantidade</th>
+                                                    <th>Valor Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dinamic content -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div id="products-section" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-box-seam"></i> Gerenciamento de Produtos</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="bi bi-plus-circle"></i> Adicionar Produto
+                        </button>
+                    </div>
+                    <hr>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Lista de Produtos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Quantidade</th>
+                                            <th>Valor Unitário</th>
+                                            <th>Valor Total</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dinamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Section -->
+                <div id="sales-section" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-cart-check"></i> Registro de Vendas</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaleModal">
+                            <i class="bi bi-plus-circle"></i> Nova Venda
+                        </button>
+                    </div>
+                    <hr>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Histórico de Vendas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="sales-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Produto</th>
+                                            <th>Quantidade</th>
+                                            <th>Valor Unitário</th>
+                                            <th>Valor Total</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dinamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reports-section" style="display: none;">
+                    <h2><i class="bi bi-graph-up"></i> Relatórios</h2>
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Estoque por Valor</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="stockChart" height="200"></canvas>
+                                    <div class="mt-3">
+                                        <p><strong>Total em Estoque:</strong> <span id="report-total-stock">R$ 0,00</span></p>
+                                        <p><strong>Produtos Cadastrados:</strong> <span id="report-total-products">0</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Vendas por Período</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="salesChart" height="200"></canvas>
+                                    <div class="mt-3">
+                                        <p><strong>Total de Vendas:</strong> <span id="report-total-sales">R$ 0,00</span></p>
+                                        <p><strong>Itens Vendidos:</strong> <span id="report-items-sold">0</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>Gerar Relatórios</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="report-type" class="form-label">Tipo de Relatório</label>
+                                        <select class="form-select" id="report-type">
+                                            <option value="stock">Relatório de Estoque</option>
+                                            <option value="sales">Relatório de Vendas</option>
+                                            <option value="low-stock">Produtos com Baixo Estoque</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="report-period" class="form-label">Período</label>
+                                        <select class="form-select" id="report-period">
+                                            <option value="today">Hoje</option>
+                                            <option value="week">Esta Semana</option>
+                                            <option value="month">Este Mês</option>
+                                            <option value="all">Todos</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" id="generate-report">
+                                <i class="bi bi-file-earmark-text"></i> Gerar Relatório
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProductModalLabel"><i class="bi bi-plus-circle"></i> Adicionar Produto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="product-form">
+                        <div class="mb-3">
+                            <label for="product-name" class="form-label">Nome do Produto</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-quantity" class="form-label">Quantidade em Estoque</label>
+                            <input type="number" class="form-control" id="product-quantity" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-price" class="form-label">Valor Unitário (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="product-price" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-product">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Sale Modal -->
+    <div class="modal fade" id="addSaleModal" tabindex="-1" aria-labelledby="addSaleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSaleModalLabel"><i class="bi bi-cart-plus"></i> Nova Venda</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sale-form">
+                        <div class="mb-3">
+                            <label for="sale-product" class="form-label">Produto</label>
+                            <select class="form-select" id="sale-product" required>
+                                <option value="">Selecione um produto</option>
+                                <!-- Dinamic content -->
+                            </select>
+                            <div class="form-text" id="product-stock-info">Estoque disponível: 0</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sale-quantity" class="form-label">Quantidade</label>
+                            <input type="number" class="form-control" id="sale-quantity" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sale-price" class="form-label">Valor Unitário (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="sale-price" min="0" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Valor Total:</strong> <span id="sale-total">R$ 0,00</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-sale">Registrar Venda</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProductModalLabel"><i class="bi bi-pencil"></i> Editar Produto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-product-form">
+                        <input type="hidden" id="edit-product-id">
+                        <div class="mb-3">
+                            <label for="edit-product-name" class="form-label">Nome do Produto</label>
+                            <input type="text" class="form-control" id="edit-product-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-product-quantity" class="form-label">Quantidade em Estoque</label>
+                            <input type="number" class="form-control" id="edit-product-quantity" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-product-price" class="form-label">Valor Unitário (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-product-price" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="update-product">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Entry Modal -->
+    <div class="modal fade" id="stockEntryModal" tabindex="-1" aria-labelledby="stockEntryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stockEntryModalLabel"><i class="bi bi-box-arrow-in-down"></i> Entrada de Estoque</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="stock-entry-form">
+                        <input type="hidden" id="stock-product-id">
+                        <div class="mb-3">
+                            <label for="stock-product-name" class="form-label">Produto</label>
+                            <input type="text" class="form-control" id="stock-product-name" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-current-quantity" class="form-label">Quantidade Atual</label>
+                            <input type="number" class="form-control" id="stock-current-quantity" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-entry-quantity" class="form-label">Quantidade a Adicionar</label>
+                            <input type="number" class="form-control" id="stock-entry-quantity" min="1" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-stock-entry">Registrar Entrada</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Banco de dados local usando localStorage
+        const DB = {
+            products: JSON.parse(localStorage.getItem('rb-products')) || [],
+            sales: JSON.parse(localStorage.getItem('rb-sales')) || [],
+            
+            save: function() {
+                localStorage.setItem('rb-products', JSON.stringify(this.products));
+                localStorage.setItem('rb-sales', JSON.stringify(this.sales));
+                console.log('Dados salvos no localStorage');
+            },
+            
+            // Métodos para gerar IDs únicos
+            nextProductId: function() {
+                return this.products.length > 0 ? Math.max(...this.products.map(p => p.id)) + 1 : 1;
+            },
+            nextSaleId: function() {
+                return this.sales.length > 0 ? Math.max(...this.sales.map(s => s.id)) + 1 : 1;
+            }
+        };
+
+        // Elementos da interface
+        const sections = {
+            dashboard: document.getElementById('dashboard-section'),
+            products: document.getElementById('products-section'),
+            sales: document.getElementById('sales-section'),
+            reports: document.getElementById('reports-section')
+        };
+        
+        const navLinks = {
+            dashboard: document.getElementById('dashboard-link'),
+            products: document.getElementById('products-link'),
+            sales: document.getElementById('sales-link'),
+            reports: document.getElementById('reports-link')
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            setupNavigation();
+            setupModals();
+            showSection('dashboard');
+            loadData();
+        });
+
+        // Configuração da navegação
+        function setupNavigation() {
+            for (const [sectionName, link] of Object.entries(navLinks)) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showSection(sectionName);
+                    if (sectionName === 'dashboard') refreshDashboard();
+                    if (sectionName === 'reports') updateCharts();
+                });
+            }
+        }
+
+        // Mostra uma seção específica
+        function showSection(sectionName) {
+            for (const section of Object.values(sections)) {
+                section.style.display = 'none';
+            }
+            
+            for (const link of Object.values(navLinks)) {
+                link.classList.remove('active');
+            }
+            
+            sections[sectionName].style.display = 'block';
+            navLinks[sectionName].classList.add('active');
+        }
+
+        // Carrega todos os dados iniciais
+        function loadData() {
+            updateProductsTable(DB.products);
+            updateProductDropdown(DB.products);
+            updateSalesTable(DB.sales);
+            refreshDashboard();
+        }
+
+        // Atualiza o dashboard
+        function refreshDashboard() {
+            // Total de produtos
+            document.getElementById('total-products').textContent = DB.products.length;
+            
+            // Valor total em estoque
+            const totalStockValue = DB.products.reduce((sum, p) => sum + (p.quantidade * p.preco), 0);
+            document.getElementById('total-stock-value').textContent = formatCurrency(totalStockValue);
+            
+            // Vendas hoje
+            const today = new Date().toISOString().split('T')[0];
+            const todaySales = DB.sales.filter(s => s.data.split('T')[0] === today).length;
+            document.getElementById('today-sales').textContent = todaySales;
+            
+            // Produtos com baixo estoque (menos de 5 unidades)
+            const lowStockProducts = DB.products.filter(p => p.quantidade < 5);
+            updateLowStockTable(lowStockProducts);
+            
+            // Últimas vendas (5 mais recentes)
+            const recentSales = DB.sales.slice().reverse().slice(0, 5);
+            updateRecentSalesTable(recentSales);
+        }
+
+        // Atualiza a tabela de produtos com baixo estoque
+        function updateLowStockTable(products) {
+            const table = document.getElementById('low-stock-table').querySelector('tbody');
+            table.innerHTML = '';
+            
+            for (const p of products) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${p.nome}</td>
+                    <td>${p.quantidade}</td>
+                    <td>${formatCurrency(p.preco)}</td>
+                `;
+                table.appendChild(row);
+            }
+            
+            if (products.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="3" class="text-center">Nenhum produto com baixo estoque</td>';
+                table.appendChild(row);
+            }
+        }
+
+        // Atualiza a tabela de vendas recentes
+        function updateRecentSalesTable(sales) {
+            const table = document.getElementById('recent-sales').querySelector('tbody');
+            table.innerHTML = '';
+            
+            for (const s of sales) {
+                const product = DB.products.find(p => p.id === s.produtoId) || { nome: 'Produto não encontrado' };
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.nome}</td>
+                    <td>${s.quantidade}</td>
+                    <td>${formatCurrency(s.valorTotal)}</td>
+                `;
+                table.appendChild(row);
+            }
+            
+            if (sales.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="3" class="text-center">Nenhuma venda registrada</td>';
+                table.appendChild(row);
+            }
+        }
+
+        // Configura os modais e seus eventos
+        function setupModals() {
+            // Modal de produto
+            document.getElementById('save-product').addEventListener('click', function() {
+                const produto = {
+                    id: DB.nextProductId(),
+                    nome: document.getElementById('product-name').value,
+                    quantidade: parseInt(document.getElementById('product-quantity').value),
+                    preco: parseFloat(document.getElementById('product-price').value)
+                };
+                
+                DB.products.push(produto);
+                DB.save();
+                
+                loadData();
+                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                document.getElementById('product-form').reset();
+                showToast('Produto adicionado com sucesso!');
+            });
+            
+            // Modal de venda
+            document.getElementById('sale-product').addEventListener('change', function() {
+                const productId = parseInt(this.value);
+                if (!productId) return;
+                
+                const produto = DB.products.find(p => p.id === productId);
+                if (produto) {
+                    document.getElementById('product-stock-info').textContent = 
+                        `Estoque disponível: ${produto.quantidade}`;
+                    document.getElementById('sale-price').value = produto.preco;
+                    updateSaleTotal();
+                }
+            });
+            
+            document.getElementById('sale-quantity').addEventListener('input', updateSaleTotal);
+            document.getElementById('sale-price').addEventListener('input', updateSaleTotal);
+            
+            document.getElementById('save-sale').addEventListener('click', function() {
+                const productId = parseInt(document.getElementById('sale-product').value);
+                const produto = DB.products.find(p => p.id === productId);
+                
+                if (!produto) {
+                    showToast('Produto não encontrado!', 'danger');
+                    return;
+                }
+                
+                const quantidade = parseInt(document.getElementById('sale-quantity').value);
+                if (produto.quantidade < quantidade) {
+                    showToast('Quantidade indisponível em estoque!', 'danger');
+                    return;
+                }
+                
+                const venda = {
+                    id: DB.nextSaleId(),
+                    produtoId: productId,
+                    quantidade: quantidade,
+                    valorUnitario: parseFloat(document.getElementById('sale-price').value),
+                    valorTotal: parseFloat(document.getElementById('sale-price').value) * quantidade,
+                    data: new Date().toISOString()
+                };
+                
+                // Atualizar quantidade em estoque
+                produto.quantidade -= venda.quantidade;
+                
+                DB.sales.push(venda);
+                DB.save();
+                
+                loadData();
+                bootstrap.Modal.getInstance(document.getElementById('addSaleModal')).hide();
+                document.getElementById('sale-form').reset();
+                showToast('Venda registrada com sucesso!');
+            });
+            
+            // Modal de edição de produto
+            document.getElementById('update-product').addEventListener('click', function() {
+                const productId = parseInt(document.getElementById('edit-product-id').value);
+                const produto = DB.products.find(p => p.id === productId);
+                
+                if (produto) {
+                    produto.nome = document.getElementById('edit-product-name').value;
+                    produto.quantidade = parseInt(document.getElementById('edit-product-quantity').value);
+                    produto.preco = parseFloat(document.getElementById('edit-product-price').value);
+                    
+                    DB.save();
+                    loadData();
+                    bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                    showToast('Produto atualizado com sucesso!');
+                }
+            });
+            
+            // Modal de entrada de estoque
+            document.getElementById('save-stock-entry').addEventListener('click', function() {
+                const productId = parseInt(document.getElementById('stock-product-id').value);
+                const produto = DB.products.find(p => p.id === productId);
+                const entrada = parseInt(document.getElementById('stock-entry-quantity').value);
+                
+                if (produto && entrada > 0) {
+                    produto.quantidade += entrada;
+                    DB.save();
+                    loadData();
+                    bootstrap.Modal.getInstance(document.getElementById('stockEntryModal')).hide();
+                    showToast(`Entrada de ${entrada} unidades registrada para ${produto.nome}!`);
+                }
+            });
+            
+            // Gerar relatório
+            document.getElementById('generate-report').addEventListener('click', function() {
+                const reportType = document.getElementById('report-type').value;
+                const period = document.getElementById('report-period').value;
+                
+                let relatorio = '';
+                let filename = '';
+                
+                if (reportType === 'stock') {
+                    relatorio = generateStockReport();
+                    filename = `relatorio_estoque_${new Date().toISOString().slice(0, 10)}.txt`;
+                } else if (reportType === 'sales') {
+                    relatorio = generateSalesReport(period);
+                    filename = `relatorio_vendas_${new Date().toISOString().slice(0, 10)}.txt`;
+                } else if (reportType === 'low-stock') {
+                    relatorio = generateLowStockReport();
+                    filename = `relatorio_baixo_estoque_${new Date().toISOString().slice(0, 10)}.txt`;
+                }
+                
+                // Cria um blob com o relatório e faz download
+                const blob = new Blob([relatorio], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('Relatório gerado com sucesso!');
+            });
+            
+            // Configura eventos para edição e exclusão de produtos
+            document.addEventListener('click', function(e) {
+                // Editar produto
+                if (e.target.closest('.edit-product')) {
+                    const id = parseInt(e.target.closest('.edit-product').getAttribute('data-id'));
+                    const produto = DB.products.find(p => p.id === id);
+                    
+                    if (produto) {
+                        document.getElementById('edit-product-id').value = produto.id;
+                        document.getElementById('edit-product-name').value = produto.nome;
+                        document.getElementById('edit-product-quantity').value = produto.quantidade;
+                        document.getElementById('edit-product-price').value = produto.preco;
+                        
+                        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+                    }
+                }
+                
+                // Excluir produto
+                if (e.target.closest('.delete-product')) {
+                    const id = parseInt(e.target.closest('.delete-product').getAttribute('data-id'));
+                    if (confirm('Tem certeza que deseja excluir este produto?')) {
+                        DB.products = DB.products.filter(p => p.id !== id);
+                        DB.save();
+                        loadData();
+                        showToast('Produto excluído com sucesso!');
+                    }
+                }
+                
+                // Entrada de estoque
+                if (e.target.closest('.stock-entry')) {
+                    const id = parseInt(e.target.closest('.stock-entry').getAttribute('data-id'));
+                    const produto = DB.products.find(p => p.id === id);
+                    
+                    if (produto) {
+                        document.getElementById('stock-product-id').value = produto.id;
+                        document.getElementById('stock-product-name').value = produto.nome;
+                        document.getElementById('stock-current-quantity').value = produto.quantidade;
+                        document.getElementById('stock-entry-quantity').value = '';
+                        
+                        new bootstrap.Modal(document.getElementById('stockEntryModal')).show();
+                    }
+                }
+            });
+        }
+
+        // Atualiza o valor total da venda no modal
+        function updateSaleTotal() {
+            const quantity = parseInt(document.getElementById('sale-quantity').value) || 0;
+            const price = parseFloat(document.getElementById('sale-price').value) || 0;
+            
+            const total = quantity * price;
+            document.getElementById('sale-total').textContent = formatCurrency(total);
+        }
+
+        // Atualiza a tabela de produtos
+        function updateProductsTable(produtos) {
+            const table = document.getElementById('products-table').querySelector('tbody');
+            table.innerHTML = '';
+            
+            for (const p of produtos) {
+                const totalValue = p.quantidade * p.preco;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${p.nome}</td>
+                    <td>${p.quantidade}</td>
+                    <td>${formatCurrency(p.preco)}</td>
+                    <td>${formatCurrency(totalValue)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-product" data-id="${p.id}" title="Editar produto">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success stock-entry" data-id="${p.id}" title="Entrada de estoque">
+                            <i class="bi bi-box-arrow-in-down"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-product" data-id="${p.id}" title="Excluir produto">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                table.appendChild(row);
+            }
+            
+            if (produtos.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="5" class="text-center">Nenhum produto cadastrado</td>';
+                table.appendChild(row);
+            }
+        }
+
+        // Atualiza o dropdown de produtos no modal de venda
+        function updateProductDropdown(produtos) {
+            const dropdown = document.getElementById('sale-product');
+            dropdown.innerHTML = '<option value="">Selecione um produto</option>';
+            
+            for (const p of produtos) {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.nome;
+                dropdown.appendChild(option);
+            }
+        }
+
+        // Atualiza a tabela de vendas
+        function updateSalesTable(vendas) {
+            const table = document.getElementById('sales-table').querySelector('tbody');
+            table.innerHTML = '';
+            
+            for (const v of vendas) {
+                const product = DB.products.find(p => p.id === v.produtoId) || { nome: 'Produto não encontrado' };
+                const date = new Date(v.data);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR').slice(0, 5)}</td>
+                    <td>${product.nome}</td>
+                    <td>${v.quantidade}</td>
+                    <td>${formatCurrency(v.valorUnitario)}</td>
+                    <td>${formatCurrency(v.valorTotal)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger delete-sale" data-id="${v.id}" title="Excluir venda">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                table.appendChild(row);
+            }
+            
+            // Configura eventos para os botões
+            document.querySelectorAll('.delete-sale').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    if (confirm('Tem certeza que deseja excluir esta venda?')) {
+                        const venda = DB.sales.find(s => s.id === id);
+                        if (venda) {
+                            // Devolver produtos ao estoque
+                            const produto = DB.products.find(p => p.id === venda.produtoId);
+                            if (produto) {
+                                produto.quantidade += venda.quantidade;
+                            }
+                        }
+                        
+                        DB.sales = DB.sales.filter(s => s.id !== id);
+                        DB.save();
+                        loadData();
+                        showToast('Venda excluída com sucesso!');
+                    }
+                });
+            });
+        }
+
+        // Atualiza os gráficos de relatório
+        function updateCharts() {
+            // Gráfico de estoque por valor
+            const stockCtx = document.getElementById('stockChart').getContext('2d');
+            
+            // Ordena produtos por valor total (quantidade * preço)
+            const sortedProducts = [...DB.products].sort((a, b) => (b.quantidade * b.preco) - (a.quantidade * a.preco));
+            const topProducts = sortedProducts.slice(0, 5);
+            
+            new Chart(stockCtx, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(p => p.nome),
+                    datasets: [{
+                        label: 'Valor em Estoque (R$)',
+                        data: topProducts.map(p => p.quantidade * p.preco),
+                        backgroundColor: topProducts.map((_, i) => 
+                            `hsl(${i * 70}, 70%, 60%)`),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de vendas por período
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            
+            // Agrupa vendas por dia (últimos 7 dias)
+            const last7Days = [...Array(7)].map((_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                return date.toISOString().split('T')[0];
+            }).reverse();
+            
+            const salesByDay = last7Days.map(day => {
+                return DB.sales.filter(s => s.data.split('T')[0] === day)
+                    .reduce((sum, s) => sum + s.valorTotal, 0);
+            });
+            
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(day => formatDate(day)),
+                    datasets: [{
+                        label: 'Vendas por Dia (R$)',
+                        data: salesByDay,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Atualiza estatísticas de relatório
+            document.getElementById('report-total-stock').textContent = 
+                formatCurrency(DB.products.reduce((sum, p) => sum + (p.quantidade * p.preco), 0));
+            document.getElementById('report-total-products').textContent = DB.products.length;
+            document.getElementById('report-total-sales').textContent = 
+                formatCurrency(DB.sales.reduce((sum, s) => sum + s.valorTotal, 0));
+            document.getElementById('report-items-sold').textContent = 
+                DB.sales.reduce((sum, s) => sum + s.quantidade, 0);
+        }
+
+        // Gera relatório de estoque
+        function generateStockReport() {
+            let relatorio = `RELATÓRIO DE ESTOQUE - RB COSMÉTICOS\n`;
+            relatorio += `Emitido em: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            
+            relatorio += `TOTAL DE PRODUTOS: ${DB.products.length}\n`;
+            relatorio += `VALOR TOTAL EM ESTOQUE: ${formatCurrency(
+                DB.products.reduce((sum, p) => sum + (p.quantidade * p.preco), 0)
+            )}\n\n`;
+            
+            relatorio += `LISTA DE PRODUTOS:\n`;
+            relatorio += '='.repeat(80) + '\n';
+            
+            for (const p of DB.products) {
+                relatorio += `Nome: ${p.nome}\n`;
+                relatorio += `Quantidade: ${p.quantidade}\n`;
+                relatorio += `Valor Unitário: ${formatCurrency(p.preco)}\n`;
+                relatorio += `Valor Total: ${formatCurrency(p.quantidade * p.preco)}\n`;
+                relatorio += '-'.repeat(80) + '\n';
+            }
+            
+            return relatorio;
+        }
+
+        // Gera relatório de vendas
+        function generateSalesReport(period) {
+            let relatorio = `RELATÓRIO DE VENDAS - RB COSMÉTICOS\n`;
+            relatorio += `Emitido em: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            
+            let filteredSales = [...DB.sales];
+            let periodLabel = '';
+            
+            if (period === 'today') {
+                const today = new Date().toISOString().split('T')[0];
+                filteredSales = DB.sales.filter(s => s.data.split('T')[0] === today);
+                periodLabel = 'HOJE';
+            } else if (period === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                filteredSales = DB.sales.filter(s => new Date(s.data) >= oneWeekAgo);
+                periodLabel = 'ESTA SEMANA';
+            } else if (period === 'month') {
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                filteredSales = DB.sales.filter(s => new Date(s.data) >= oneMonthAgo);
+                periodLabel = 'ESTE MÊS';
+            } else {
+                periodLabel = 'TODOS OS REGISTROS';
+            }
+            
+            relatorio += `PERÍODO: ${periodLabel}\n`;
+            relatorio += `TOTAL DE VENDAS: ${filteredSales.length}\n`;
+            relatorio += `VALOR TOTAL: ${formatCurrency(
+                filteredSales.reduce((sum, s) => sum + s.valorTotal, 0)
+            )}\n\n`;
+            
+            relatorio += `LISTA DE VENDAS:\n`;
+            relatorio += '='.repeat(80) + '\n';
+            
+            for (const s of filteredSales) {
+                const product = DB.products.find(p => p.id === s.produtoId) || { nome: 'Produto não encontrado' };
+                const date = new Date(s.data);
+                
+                relatorio += `Data: ${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR').slice(0, 5)}\n`;
+                relatorio += `Produto: ${product.nome}\n`;
+                relatorio += `Quantidade: ${s.quantidade}\n`;
+                relatorio += `Valor Unitário: ${formatCurrency(s.valorUnitario)}\n`;
+                relatorio += `Valor Total: ${formatCurrency(s.valorTotal)}\n`;
+                relatorio += '-'.repeat(80) + '\n';
+            }
+            
+            return relatorio;
+        }
+
+        // Gera relatório de produtos com baixo estoque
+        function generateLowStockReport() {
+            const lowStockProducts = DB.products.filter(p => p.quantidade < 5);
+            
+            let relatorio = `RELATÓRIO DE BAIXO ESTOQUE - RB COSMÉTICOS\n`;
+            relatorio += `Emitido em: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            
+            relatorio += `TOTAL DE PRODUTOS COM BAIXO ESTOQUE: ${lowStockProducts.length}\n\n`;
+            
+            if (lowStockProducts.length === 0) {
+                relatorio += 'Nenhum produto com baixo estoque.\n';
+                return relatorio;
+            }
+            
+            relatorio += `LISTA DE PRODUTOS:\n`;
+            relatorio += '='.repeat(80) + '\n';
+            
+            for (const p of lowStockProducts) {
+                relatorio += `Nome: ${p.nome}\n`;
+                relatorio += `Quantidade: ${p.quantidade}\n`;
+                relatorio += `Valor Unitário: ${formatCurrency(p.preco)}\n`;
+                relatorio += `Valor Total: ${formatCurrency(p.quantidade * p.preco)}\n`;
+                relatorio += '-'.repeat(80) + '\n';
+            }
+            
+            return relatorio;
+        }
+
+        // Formata data para exibição
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Formata valor monetário
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+
+        // Mostra uma mensagem toast
+        function showToast(message, type = 'success') {
+            // Remove toast existente se houver
+            const existingToast = document.getElementById('custom-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // Cria o elemento toast
+            const toast = document.createElement('div');
+            toast.id = 'custom-toast';
+            toast.className = `toast show align-items-center text-white bg-${type}`;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '9999';
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove o toast após 3 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+            
+            // Configura o botão de fechar
+            toast.querySelector('button').addEventListener('click', () => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            });
+        }
+    </script>
+</body>
+</html>
