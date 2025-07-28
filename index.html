@@ -550,6 +550,29 @@
         </div>
     </div>
 
+    <!-- Modal de Aviso sobre armazenamento local -->
+    <div class="modal fade" id="browserWarningModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Aviso Importante</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Este sistema armazena dados apenas no seu navegador. Se você limpar o cache ou usar outro navegador, os dados não estarão disponíveis.</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="dontShowAgain">
+                        <label class="form-check-label" for="dontShowAgain">
+                            Não mostrar este aviso novamente
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="understandWarning">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -594,7 +617,27 @@
             setupModals();
             showSection('dashboard');
             loadData();
+            showBrowserWarning();
         });
+
+        // Mostra aviso sobre armazenamento local
+        function showBrowserWarning() {
+            const dontShowAgain = localStorage.getItem('dontShowWarning');
+            
+            if (!dontShowAgain) {
+                // Mostra o modal de aviso
+                const warningModal = new bootstrap.Modal(document.getElementById('browserWarningModal'));
+                warningModal.show();
+                
+                // Configura o botão "Entendi"
+                document.getElementById('understandWarning').addEventListener('click', function() {
+                    if (document.getElementById('dontShowAgain').checked) {
+                        localStorage.setItem('dontShowWarning', 'true');
+                    }
+                    warningModal.hide();
+                });
+            }
+        }
 
         // Configuração da navegação
         function setupNavigation() {
